@@ -1,202 +1,136 @@
-import 'package:english_words/english_words.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
 void main() {
-  runApp(MyApp());
+  // 最初に表示するWidget
+  runApp(MyTodoApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
+class MyTodoApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => MyAppState(),
-      child: MaterialApp(
-        title: 'Namer App',
-        theme: ThemeData(
-          useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepOrange),
-        ),
-        home: MyHomePage(),
+    return MaterialApp(
+      title: 'My Todo App',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
       ),
+      home: TodoListPage(),
     );
   }
 }
 
-class MyAppState extends ChangeNotifier {
-  var current = WordPair.random();
-
-  void getNext(){
-      current = WordPair.random();
-      notifyListeners();
-  }
-
-  var favorites = <WordPair>[];
-
-void toggleFavorite(){
-  if(favorites.contains(current)){
-    favorites.remove(current);
-  } else{
-    favorites.add(current);
-  }
-  notifyListeners();
-  }
-}
-
-
-class MyHomePage extends StatefulWidget {
+// リスト一覧画面用Widget
+class TodoListPage extends StatefulWidget {
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<TodoListPage> createState() => _TodoListPageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  var selectedIndex = 0;
+class _TodoListPageState extends State<TodoListPage> {
+  List<String> todoList = [];
   @override
   Widget build(BuildContext context) {
-    Widget page;
-  switch (selectedIndex) {
-    case 0:
-      page = GeneratorPage();
-      break;
-    case 1:
-      page = FavoritesPage();
-      break;
-    default:
-      throw UnimplementedError('no widget for $selectedIndex');
-  }
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return Scaffold(
-          body: Row(
-            children: [
-              SafeArea(
-                  child: NavigationRail(
-                  extended: constraints.maxWidth >= 600,
-                  destinations: [
-                    NavigationRailDestination(
-                      icon: Icon(Icons.home),
-                      label: Text('Home'),
-                    ),
-                    NavigationRailDestination(
-                      icon: Icon(Icons.favorite),
-                      label: Text('Favorites'),
-                    ),
-                  ],
-                  selectedIndex: selectedIndex,
-                  onDestinationSelected: (value) {
-                    setState(() {
-                      selectedIndex = value;
-                    });
-                  },
-                ),
+    return Scaffold(
+
+      appBar: AppBar(
+        title: Text('list'),
+      ),
+
+      body: ListView.builder(
+        itemCount: todoList.length,
+        itemBuilder: (context, index){
+          return Card(
+            child: ListTile(
+              title: Text(todoList[index]),
             ),
-                
-              Expanded(
-                child: Container(
-                  color: Theme.of(context).colorScheme.primaryContainer,
-                  child: page,
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async{
+          final newListText = await Navigator.of(context).push(
+            MaterialPageRoute(builder: (context){
+            return TodoAddPage();
+            }),
+          );
+          if(newListText != null){
+            setState((){
+              todoList.add(newListText);
+            });
+          }
+        },
+        child: Icon(Icons.add),
+      ),
+    );
+  }
+}
+
+class TodoAddPage extends StatefulWidget {
+  @override
+  State<TodoAddPage> createState() => _TodoAddPageState();
+}
+
+class _TodoAddPageState extends State<TodoAddPage> {
+  String _text = '';
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      // *** 追加する部分 ***
+      appBar: AppBar(
+        title: Text('Add list'),
+      ),
+      // *** 追加する部分 ***
+      body: Container(
+        // 余白を付ける
+        padding: EdgeInsets.all(64),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            // テキスト入力
+            Text(_text, style: TextStyle(color: Colors.blue)),
+            const SizedBox(height: 8),
+            TextField(
+              decoration: InputDecoration(
+                hintText: 'input todo string'
+              ),
+              onChanged: (String value){
+                setState(() {
+                  _text = value;
+                });
+              },
+            ),
+            SizedBox(height: 10),
+            Container(
+              // 横幅いっぱいに広げる
+              width: double.infinity,
+              // リスト追加ボタン
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue, // background
+                    foregroundColor: Colors.white, // foreground
                 ),
-              ),
-            ],
-          ),
-        );
-      }
-    );
-  }
-}
-
-class GeneratorPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    var appState = context.watch<MyAppState>();
-    var pair = appState.current;
-
-    IconData icon;
-    if (appState.favorites.contains(pair)) {
-      icon = Icons.favorite;
-    } else {
-      icon = Icons.favorite_border;
-    }
-
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          BigCard(pair: pair),
-          SizedBox(height: 10),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ElevatedButton.icon(
                 onPressed: () {
-                  appState.toggleFavorite();
+                  Navigator.of(context).pop(_text);
                 },
-                icon: Icon(icon),
-                label: Text('Check'),
+                child: Text('Add list', style: TextStyle(color: Colors.white)),
               ),
-              SizedBox(width: 10),
-              ElevatedButton(
+            ),
+            const SizedBox(height: 8),
+            Container(
+              // 横幅いっぱいに広げる
+              width: double.infinity,
+              // キャンセルボタン
+              child: TextButton(
+                // ボタンをクリックした時の処理
                 onPressed: () {
-                  appState.getNext();
+                  // "pop"で前の画面に戻る
+                  Navigator.of(context).pop();
                 },
-                child: Text('Next'),
+                child: Text('cancel'),
               ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class FavoritesPage extends StatelessWidget{
-  @override
-  Widget build(BuildContext context){
-    var appState = context.watch<MyAppState>();
-    
-    return ListView(
-      children:[
-        Padding(
-          padding: const EdgeInsets.all(20),
-          child: Text('You have'
-              '${appState.favorites.length} favorites:'),
+            ),
+          ],
         ),
-        for (var pair in appState.favorites)
-          ListTile(
-            leading: Icon(Icons.favorite),
-            title: Text(pair.asLowerCase),
-          ),
-      ],
-    );
-
-  }
-}
-class BigCard extends StatelessWidget {
-  const BigCard({
-    super.key,
-    required this.pair,
-  });
-
-  final WordPair pair;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final style = theme.textTheme.displayMedium!.copyWith(
-      color: theme.colorScheme.onPrimary,
-    );
-
-    return Card(
-      color: theme.colorScheme.primary,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Text(
-        pair.asLowerCase, 
-        style:style,
-        semanticsLabel: "${pair.first} ${pair.second}",),
       ),
     );
   }
 }
+
