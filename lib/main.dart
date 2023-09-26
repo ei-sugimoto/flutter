@@ -41,17 +41,32 @@ class _TodoListPageState extends State<TodoListPage> {
       body: ListView.builder(
         itemCount: todoList.length,
         itemBuilder: (context, index){
-          return Card(
-            child: CheckboxListTile(
-              title: Text(todoList[index]),
-              value: checkbox[index],
-
-              onChanged: (bool? value){
+          return Dismissible(
+              background: Container(
+                alignment: Alignment.centerLeft,
+                color: const Color.fromARGB(255, 200, 0, 0),
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(20.0, 0.0, 0.0, 0.0),
+                  child:  Icon(Icons.delete, color: Colors.white)
+                  ),
+              ),
+              onDismissed: (direction){
                 setState(() {
-                  checkbox[index] = value!;
+                  todoList.removeAt(index);
                 });
               },
-            ),
+              key: UniqueKey(),
+              child: Card(
+                child: CheckboxListTile(
+                title: Text(todoList[index]),
+                value: checkbox[index],
+                  onChanged: (bool? value){
+                    setState(() {
+                  checkbox[index] = value!;
+                    });
+                  },
+                ),
+              ),
           );
         },
       ),
