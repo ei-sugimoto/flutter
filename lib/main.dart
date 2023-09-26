@@ -26,6 +26,10 @@ class TodoListPage extends StatefulWidget {
 
 class _TodoListPageState extends State<TodoListPage> {
   List<String> todoList = [];
+  
+  List<bool> checkbox = [];
+  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -38,8 +42,15 @@ class _TodoListPageState extends State<TodoListPage> {
         itemCount: todoList.length,
         itemBuilder: (context, index){
           return Card(
-            child: ListTile(
+            child: CheckboxListTile(
               title: Text(todoList[index]),
+              value: checkbox[index],
+
+              onChanged: (bool? value){
+                setState(() {
+                  checkbox[index] = value!;
+                });
+              },
             ),
           );
         },
@@ -51,9 +62,11 @@ class _TodoListPageState extends State<TodoListPage> {
             return TodoAddPage();
             }),
           );
+          bool newListvalue = false;
           if(newListText != null){
             setState((){
               todoList.add(newListText);
+              checkbox.add(newListvalue);
             });
           }
         },
